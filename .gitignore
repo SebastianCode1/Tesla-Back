@@ -1,0 +1,29 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Log files
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Directory for uploaded files
+uploads/
+
+# Test coverage
+coverage/
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+
+# Package files
+package-lock.json
