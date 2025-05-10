@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
 // Middleware de manejo de errores
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; // Changed default port to 5001
 
 const server = app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en modo ${process.env.NODE_ENV} en el puerto ${PORT}`);
