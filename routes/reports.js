@@ -1,29 +1,50 @@
-const express = require('express');
+const express = require("express")
 const {
   getReports,
   getReport,
   createReport,
   updateReport,
+  updateReportStatus,
   deleteReport,
-  generatePDF
-} = require('../controllers/reportController');
+  generateReportPDF,
+} = require("../controllers/reportController")
 
-const router = express.Router();
+const router = express.Router()
+const { protect, authorize } = require("../middleware/auth")
+const upload = require("../utils/fileUpload")
 
-const { protect, authorize } = require('../middleware/auth');
+// Aplicar middleware de autenticación a todas las rutas
+router.use(protect)
 
-router.use(protect);
+// Rutas para usuarios autenticados (cualquier rol)
+router.get("/", getReports)
+router.get("/:id", getReport)
+router.get("/:id/pdf", generateReportPDF)
 
-router.route('/')
-  .get(getReports)
-  .post(authorize('admin', 'technician'), createReport);
+// Rutas para técnicos y administradores
+router.post(
+  "/",
+  authorize("technician", "admin"),
+  upload.fields([
+    { name: "technicianSignature", maxCount: 1 },
+    { name: "clientSignature", maxCount: 1 },
+  ]),
+  createReport,
+)
 
-router.route('/:id')
-  .get(getReport)
-  .put(authorize('admin', 'technician'), updateReport)
-  .delete(authorize('admin', 'technician'), deleteReport);
+router.put(
+  "/:id",
+  authorize("technician", "admin"),
+  upload.fields([
+    { name: "technicianSignature", maxCount: 1 },
+    { name: "clientSignature", maxCount: 1 },
+  ]),
+  updateReport,
+)
 
-router.route('/:id/pdf')
-  .get(generatePDF);
+router.put("/:id/status", authorize("technician", "admin"), updateReportStatus)
 
-module.exports = router;
+// Rutas solo para administradores
+router.delete("/:id", authorize("admin"), deleteReport)
+
+module.exports = router

@@ -1,26 +1,29 @@
-const express = require('express');
-const router = express.Router();
-const { protect } = require('../middleware/auth');
+const express = require("express")
+const {
+  getInvoices,
+  getInvoice,
+  createInvoice,
+  updateInvoice,
+  updateInvoiceStatus,
+  deleteInvoice,
+  generateInvoicePDF,
+} = require("../controllers/invoiceController")
 
-// Note: This is a basic implementation matching the project structure.
-// The actual invoice controller methods should be implemented based on business requirements
-router.route('/')
-  .get(protect, (req, res) => {
-    res.status(200).json({ message: 'Get all invoices' });
-  })
-  .post(protect, (req, res) => {
-    res.status(201).json({ message: 'Create new invoice' });
-  });
+const router = express.Router()
+const { protect, authorize } = require("../middleware/auth")
 
-router.route('/:id')
-  .get(protect, (req, res) => {
-    res.status(200).json({ message: 'Get single invoice' });
-  })
-  .put(protect, (req, res) => {
-    res.status(200).json({ message: 'Update invoice' });
-  })
-  .delete(protect, (req, res) => {
-    res.status(200).json({ message: 'Delete invoice' });
-  });
+// Aplicar middleware de autenticación a todas las rutas
+router.use(protect)
 
-module.exports = router;
+// Rutas para usuarios autenticados (cualquier rol)
+router.get("/", getInvoices)
+router.get("/:id", getInvoice)
+router.get("/:id/pdf", generateInvoicePDF)
+
+// Rutas solo para administradores
+router.post("/", authorize("admin"), createInvoice)
+router.put("/:id", authorize("admin"), updateInvoice)
+router.put("/:id/status", authorize("admin"), updateInvoiceStatus)
+router.delete("/:id", authorize("admin"), deleteInvoice)
+
+module.exports = router

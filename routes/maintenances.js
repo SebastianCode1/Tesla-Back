@@ -1,29 +1,31 @@
-const express = require('express');
+const express = require("express")
 const {
   getMaintenances,
   getMaintenance,
   createMaintenance,
   updateMaintenance,
+  updateMaintenanceStatus,
   deleteMaintenance,
-  assignTechnician
-} = require('../controllers/maintenanceController');
+  assignTechnician,
+} = require("../controllers/maintenanceController")
 
-const router = express.Router();
+const router = express.Router()
+const { protect, authorize } = require("../middleware/auth")
 
-const { protect, authorize } = require('../middleware/auth');
+// Aplicar middleware de autenticación a todas las rutas
+router.use(protect)
 
-router.use(protect);
+// Rutas para usuarios autenticados (cualquier rol)
+router.get("/", getMaintenances)
+router.get("/:id", getMaintenance)
 
-router.route('/')
-  .get(getMaintenances)
-  .post(authorize('admin'), createMaintenance);
+// Rutas para técnicos y administradores
+router.put("/:id/status", authorize("technician", "admin"), updateMaintenanceStatus)
 
-router.route('/:id')
-  .get(getMaintenance)
-  .put(updateMaintenance)
-  .delete(authorize('admin'), deleteMaintenance);
+// Rutas solo para administradores
+router.post("/", authorize("admin"), createMaintenance)
+router.put("/:id", authorize("admin"), updateMaintenance)
+router.delete("/:id", authorize("admin"), deleteMaintenance)
+router.put("/:id/assign", authorize("admin"), assignTechnician)
 
-router.route('/:id/assign')
-  .put(authorize('admin'), assignTechnician);
-
-module.exports = router;
+module.exports = router

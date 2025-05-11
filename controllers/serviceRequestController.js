@@ -139,6 +139,85 @@ exports.updateServiceRequest = async (req, res) => {
   }
 };
 
+exports.updateServiceRequestStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!status || !['pending', 'approved', 'in-progress', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Estado de solicitud inválido'
+      });
+    }
+
+    let serviceRequest = await ServiceRequest.findById(req.params.id);
+
+    if (!serviceRequest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Solicitud de servicio no encontrada'
+      });
+    }
+
+    // Solo los administradores pueden cambiar el estado
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'No autorizado para cambiar el estado de solicitudes'
+      });
+    }
+
+    // Actualizar solo el estado
+    serviceRequest = await ServiceRequest.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    // Notificar al cliente del cambio de estado
+    if (req.createNotification) {
+      let message = '';
+      let type = 'info';
+
+      switch (status) {
+        case 'approved':
+          message = 'Su solicitud de servicio ha sido aprobada';
+          break;
+        case 'in-progress':
+          message = 'Su solicitud de servicio está siendo procesada';
+          break;
+        case 'completed':
+          message = 'Su solicitud de servicio ha sido completada';
+          break;
+        case 'cancelled':
+          message = 'Su solicitud de servicio ha sido cancelada';
+          type = 'emergency';
+          break;
+        default:
+          message = `El estado de su solicitud de servicio ha cambiado a: ${status}`;
+      }
+
+      await req.createNotification({
+        userId: serviceRequest.clientId,
+        title: 'Actualización de Solicitud',
+        message,
+        type
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: serviceRequest
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar el estado de la solicitud',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Eliminar una solicitud de servicio
 // @route   DELETE /api/service-requests/:id
 // @access  Private

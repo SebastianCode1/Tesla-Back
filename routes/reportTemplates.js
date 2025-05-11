@@ -1,25 +1,25 @@
-const express = require('express');
+const express = require("express")
 const {
   getReportTemplates,
   getReportTemplate,
   createReportTemplate,
   updateReportTemplate,
-  deleteReportTemplate
-} = require('../controllers/reportTemplateController');
+  deleteReportTemplate,
+} = require("../controllers/reportTemplateController")
 
-const router = express.Router();
+const router = express.Router()
+const { protect, authorize } = require("../middleware/auth")
 
-const { protect, authorize } = require('../middleware/auth');
+// Aplicar middleware de autenticación a todas las rutas
+router.use(protect)
 
-router.use(protect);
+// Rutas para usuarios autenticados (cualquier rol)
+router.get("/", getReportTemplates)
+router.get("/:id", getReportTemplate)
 
-router.route('/')
-  .get(getReportTemplates)
-  .post(authorize('admin'), createReportTemplate);
+// Rutas solo para administradores
+router.post("/", authorize("admin"), createReportTemplate)
+router.put("/:id", authorize("admin"), updateReportTemplate)
+router.delete("/:id", authorize("admin"), deleteReportTemplate)
 
-router.route('/:id')
-  .get(getReportTemplate)
-  .put(authorize('admin'), updateReportTemplate)
-  .delete(authorize('admin'), deleteReportTemplate);
-
-module.exports = router;
+module.exports = router
